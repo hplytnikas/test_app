@@ -93,91 +93,6 @@
   }
 
   // ════════════════════════════════════════════════════════════════════════════
-  //  EXPRESS CHECKOUT (QUICK_CHECKOUT = true OR ?express=true)
-  // ════════════════════════════════════════════════════════════════════════════
-  function renderExpress() {
-    document.getElementById('checkoutBreadcrumb').textContent = 'Express Checkout';
-    document.getElementById('checkoutContainer').innerHTML = `
-      <div class="express-layout">
-        <div>
-          <div class="express-badge">⚡ Express Checkout</div>
-          <h2 class="serif" style="margin-bottom:8px">Complete Your Order</h2>
-          <p class="muted" style="margin-bottom:32px; font-size:0.9rem">Fill in your details below and place your order in one step.</p>
-
-          <form onsubmit="submitExpress(event)">
-            <div class="checkout-form-section">
-              <h3>Contact &amp; Delivery</h3>
-              <div class="form-grid">
-                <div class="form-grid form-grid-2">
-                  <div class="form-group">
-                    <label>First name</label>
-                    <input type="text" class="form-control" placeholder="James" required />
-                  </div>
-                  <div class="form-group">
-                    <label>Last name</label>
-                    <input type="text" class="form-control" placeholder="Smith" required />
-                  </div>
-                </div>
-                <div class="form-group">
-                  <label>Email</label>
-                  <input type="email" class="form-control" placeholder="james@example.com" required />
-                </div>
-                <div class="form-group">
-                  <label>Delivery address</label>
-                  <input type="text" class="form-control" placeholder="123 Mayfair Street, London, W1K 1AB" required />
-                </div>
-              </div>
-            </div>
-
-            <div class="checkout-form-section">
-              <h3>Payment Details</h3>
-              <div class="form-grid">
-                <div class="form-group">
-                  <label>Card number</label>
-                  <input type="text" class="form-control" placeholder="4242 4242 4242 4242" maxlength="19" required />
-                </div>
-                <div class="card-input-row">
-                  <div class="form-group">
-                    <label>Cardholder name</label>
-                    <input type="text" class="form-control" placeholder="James Smith" required />
-                  </div>
-                  <div class="form-group">
-                    <label>Expiry</label>
-                    <input type="text" class="form-control" placeholder="MM/YY" maxlength="5" required />
-                  </div>
-                  <div class="form-group">
-                    <label>CVV</label>
-                    <input type="text" class="form-control" placeholder="123" maxlength="4" required />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="tc-row">
-              <input type="checkbox" id="tcExpress" required />
-              <label for="tcExpress">
-                I agree to the <a href="#">Terms &amp; Conditions</a> and confirm my order is correct.
-              </label>
-            </div>
-
-            <button type="submit" class="btn btn-primary btn-lg btn-full" style="margin-top:8px">
-              ⚡ Place Order — £${cartTotal().toLocaleString()}
-            </button>
-            <p class="form-note">Encrypted payment · Order confirmed immediately</p>
-          </form>
-        </div>
-        ${orderSummaryHtml()}
-      </div>`;
-  }
-
-  function submitExpress(e) {
-    e.preventDefault();
-    localStorage.setItem('he_order', JSON.stringify({ cart: getCart(), mode: 'express', total: cartTotal() }));
-    localStorage.removeItem('he_cart');
-    location.href = 'confirmation.html';
-  }
-
-  // ════════════════════════════════════════════════════════════════════════════
   //  SLOW CHECKOUT — 5 steps
   // ════════════════════════════════════════════════════════════════════════════
 
@@ -581,19 +496,14 @@
       return;
     }
 
-    if (CONFIG.QUICK_CHECKOUT || isExpress) {
-      renderExpress();
-    } else {
-      renderStep();
-    }
+    renderStep();
   }
 
   function removeFromSummary(id) {
     removeFromCart(id);
     const cart = getCart();
     if (cart.length === 0) { location.href = 'cart.html'; return; }
-    // Re-render the current view to refresh the summary
-    if (CONFIG.QUICK_CHECKOUT || isExpress) { renderExpress(); } else { renderStep(stepParam); }
+    renderStep();
   }
 
   init();
