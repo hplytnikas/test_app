@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Order Confirmed — Horlogerie Élite</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="config.js"></script>
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <a href="index.html" class="logo">Horlogerie <span>Élite</span></a>
+    <div class="header-actions">
+      <a href="index.html" class="btn btn-ghost" style="font-size:0.82rem">← Back to Store</a>
+    </div>
+  </div>
+</header>
+
+<section style="padding-top:68px; min-height:calc(100vh - 80px)">
+  <div class="container">
+    <div class="confirmation-wrap">
+      <div class="confirmation-icon">✦</div>
+      <h1 class="serif">Thank You for Your Purchase</h1>
+      <div class="order-number" id="orderNumber">Order #HE-000000</div>
+      <p class="muted" style="font-size:1rem; line-height:1.8; max-width:480px; margin:0 auto">
+        Your order has been placed successfully. Your timepiece will be carefully packaged and dispatched shortly.
+      </p>
+
+      <div class="confirmation-detail" id="orderDetail">
+        <!-- Rendered by JS -->
+      </div>
+
+      <div style="margin-top:40px; display:flex; gap:16px; justify-content:center; flex-wrap:wrap">
+        <a href="catalog.html" class="btn btn-outline btn-lg">Continue Shopping</a>
+        <a href="index.html" class="btn btn-ghost">Back to Home</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer style="margin-top:0">
+  <div class="container">
+    <div class="footer-bottom">
+      <span>© 2025 Horlogerie Élite Ltd. All rights reserved.</span>
+    </div>
+  </div>
+</footer>
+
+<div class="mode-badge" id="modeBadge"></div>
+
+<script src="data.js"></script>
+<script>
+  setModeBadge();
+
+  // Generate a deterministic-looking order number
+  const orderId = 'HE-' + Math.random().toString(36).substr(2, 6).toUpperCase();
+  document.getElementById('orderNumber').textContent = `Order #${orderId}`;
+
+  const order = JSON.parse(localStorage.getItem('he_order') || 'null');
+
+  if (!order) {
+    document.getElementById('orderDetail').innerHTML = `
+      <p class="muted" style="text-align:center">No order details found. <a href="catalog.html" style="color:var(--gold)">Browse our collection.</a></p>`;
+  } else {
+    const modeLabel = order.mode === 'express' ? '⚡ Express Checkout' : '🛒 Standard Checkout';
+    document.getElementById('orderDetail').innerHTML = `
+      <h3>Order Details</h3>
+      <div class="summary-row" style="margin-top:16px">
+        <span class="muted">Order reference</span>
+        <span style="font-weight:600">#${orderId}</span>
+      </div>
+      <div class="summary-row">
+        <span class="muted">Checkout method</span>
+        <span>${modeLabel}</span>
+      </div>
+      <div class="summary-row">
+        <span class="muted">Items</span>
+        <span>${(order.cart || []).map(i => `${i.brand} ${i.name}`).join(', ')}</span>
+      </div>
+      <div class="summary-row total">
+        <span>Total paid</span>
+        <span>£${order.total.toLocaleString()}</span>
+      </div>
+      <div style="margin-top:24px; padding-top:20px; border-top:1px solid var(--border)">
+        <p style="font-size:0.85rem; color:var(--muted); line-height:1.8">
+          📦 Your order is being prepared for dispatch.<br>
+          📧 Confirmation sent to the email provided at checkout.<br>
+          🔔 You will receive a tracking number once dispatched.
+        </p>
+      </div>`;
+  }
+
+  // Clear the order from localStorage after displaying
+  // (keep a short window so page refresh still works)
+  setTimeout(() => localStorage.removeItem('he_order'), 5000);
+</script>
+</body>
+</html>

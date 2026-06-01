@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Collections — Horlogerie Élite</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="config.js"></script>
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <a href="index.html" class="logo">Horlogerie <span>Élite</span></a>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="catalog.html" class="active">Collections</a>
+      <a href="catalog.html?brand=rolex">Rolex</a>
+      <a href="catalog.html?brand=omega">Omega</a>
+      <a href="#">About</a>
+      <a href="cart.html">Cart<span class="cart-nav-count" id="cartNavCount" style="display:none">0</span></a>
+    </nav>
+    <div class="header-actions"></div>
+  </div>
+</header>
+
+<div class="page-hero">
+  <div class="container">
+    <div class="breadcrumb">
+      <a href="index.html">Home</a>
+      <span>›</span>
+      <span>Collections</span>
+    </div>
+    <h1 style="margin-top:20px" id="pageTitle">All Collections</h1>
+    <p id="pageDesc">Discover our curated selection of luxury timepieces from the world's finest watchmakers.</p>
+  </div>
+</div>
+
+<section class="section">
+  <div class="container">
+    <div class="catalog-layout">
+
+      <!-- Filters -->
+      <aside class="filter-panel">
+        <div class="filter-section">
+          <div class="filter-title">Brand</div>
+          <label class="filter-option"><input type="checkbox" class="brand-filter" value="Rolex" /><label>Rolex</label></label>
+          <label class="filter-option"><input type="checkbox" class="brand-filter" value="Omega" /><label>Omega</label></label>
+          <label class="filter-option"><input type="checkbox" class="brand-filter" value="Patek Philippe" /><label>Patek Philippe</label></label>
+          <label class="filter-option"><input type="checkbox" class="brand-filter" value="Audemars Piguet" /><label>Audemars Piguet</label></label>
+          <label class="filter-option"><input type="checkbox" class="brand-filter" value="TAG Heuer" /><label>TAG Heuer</label></label>
+        </div>
+        <div class="filter-section">
+          <div class="filter-title">Price Range</div>
+          <div class="price-range">
+            <input type="number" class="price-input" id="priceMin" placeholder="Min" value="" />
+            <span class="muted">—</span>
+            <input type="number" class="price-input" id="priceMax" placeholder="Max" value="" />
+          </div>
+          <button class="btn btn-outline" style="margin-top:12px; width:100%; font-size:0.78rem; padding:10px" onclick="applyFilters()">Apply</button>
+        </div>
+        <div class="filter-section">
+          <div class="filter-title">Availability</div>
+          <label class="filter-option"><input type="checkbox" checked /><label>In Stock</label></label>
+          <label class="filter-option"><input type="checkbox" /><label>Pre-Order</label></label>
+        </div>
+      </aside>
+
+      <!-- Grid -->
+      <div>
+        <div class="sort-bar">
+          <p id="countLabel" class="muted">Showing 6 watches</p>
+          <select class="sort-select" id="sortSelect" onchange="renderGrid()">
+            <option value="featured">Sort: Featured</option>
+            <option value="price-asc">Price: Low to High</option>
+            <option value="price-desc">Price: High to Low</option>
+            <option value="rating">Top Rated</option>
+          </select>
+        </div>
+        <div class="product-grid product-grid-3" id="catalogGrid"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <div class="footer-bottom">
+      <span>© 2025 Horlogerie Élite Ltd. All rights reserved.</span>
+    </div>
+  </div>
+</footer>
+
+<div class="mode-badge" id="modeBadge"></div>
+
+<script src="data.js"></script>
+<script>
+  updateCartBadge();
+  setModeBadge();
+
+  const params = new URLSearchParams(location.search);
+  const brandParam = params.get('brand');
+
+  if (brandParam) {
+    document.getElementById('pageTitle').textContent = brandParam.charAt(0).toUpperCase() + brandParam.slice(1) + ' Collection';
+    document.getElementById('pageDesc').textContent = `Explore our range of authentic ${brandParam.charAt(0).toUpperCase() + brandParam.slice(1)} timepieces.`;
+    document.querySelectorAll('.brand-filter').forEach(cb => {
+      if (cb.value.toLowerCase() === brandParam.toLowerCase()) cb.checked = true;
+    });
+  }
+
+  function getFiltered() {
+    const checked = [...document.querySelectorAll('.brand-filter:checked')].map(c => c.value);
+    const min = parseFloat(document.getElementById('priceMin').value) || 0;
+    const max = parseFloat(document.getElementById('priceMax').value) || Infinity;
+    const sort = document.getElementById('sortSelect').value;
+
+    let list = WATCHES.filter(w => {
+      const brandMatch = checked.length === 0 || checked.includes(w.brand);
+      const priceMatch = w.price >= min && w.price <= max;
+      return brandMatch && priceMatch;
+    });
+
+    if (sort === 'price-asc') list.sort((a,b) => a.price - b.price);
+    else if (sort === 'price-desc') list.sort((a,b) => b.price - a.price);
+    else if (sort === 'rating') list.sort((a,b) => b.rating - a.rating);
+
+    return list;
+  }
+
+  function applyFilters() { renderGrid(); }
+
+  function renderGrid() {
+    const list = getFiltered();
+    const grid = document.getElementById('catalogGrid');
+    document.getElementById('countLabel').textContent = `Showing ${list.length} watch${list.length !== 1 ? 'es' : ''}`;
+    grid.innerHTML = list.map(w => `
+      <a href="product.html?id=${w.id}" class="card product-card">
+        <div class="product-card-img">
+          <img src="${w.img}" alt="${w.name}" loading="lazy" />
+          ${w.badge ? `<span class="product-badge">${w.badge}</span>` : ''}
+        </div>
+        <div class="product-card-body">
+          <div class="product-brand">${w.brand}</div>
+          <div class="product-name">${w.name}</div>
+          <div class="muted" style="font-size:0.8rem;margin-bottom:8px">${w.ref}</div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <span class="stars" style="font-size:0.7rem">${'★'.repeat(Math.round(w.rating))}</span>
+            <span class="muted" style="font-size:0.78rem">(${w.reviews})</span>
+          </div>
+          <div style="margin-top:10px"><span class="product-price">£${w.price.toLocaleString()}</span></div>
+        </div>
+      </a>`).join('');
+  }
+
+  document.querySelectorAll('.brand-filter').forEach(cb => cb.addEventListener('change', renderGrid));
+
+  renderGrid();
+</script>
+</body>
+</html>

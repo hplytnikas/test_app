@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Product — Horlogerie Élite</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="config.js"></script>
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <a href="index.html" class="logo">Horlogerie <span>Élite</span></a>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="catalog.html">Collections</a>
+      <a href="catalog.html?brand=rolex">Rolex</a>
+      <a href="catalog.html?brand=omega">Omega</a>
+      <a href="#">About</a>
+      <a href="cart.html">Cart<span class="cart-nav-count" id="cartNavCount" style="display:none">0</span></a>
+    </nav>
+    <div class="header-actions"></div>
+  </div>
+</header>
+
+<div style="padding-top:68px">
+  <div class="container">
+    <div class="breadcrumb">
+      <a href="index.html">Home</a><span>›</span>
+      <a href="catalog.html">Collections</a><span>›</span>
+      <span id="breadcrumbName">Watch</span>
+    </div>
+  </div>
+</div>
+
+<section class="section" style="padding-top:32px">
+  <div class="container">
+    <div class="product-layout" id="productLayout">
+      <!-- Rendered by JS -->
+    </div>
+  </div>
+</section>
+
+<!-- Related watches -->
+<section class="section" style="padding-top:0">
+  <div class="container">
+    <div class="divider" style="margin-bottom:64px"></div>
+    <div class="section-header">
+      <h2>You May Also Like</h2>
+      <p>More exceptional timepieces from our collection.</p>
+    </div>
+    <div class="product-grid product-grid-4" id="relatedGrid"></div>
+  </div>
+</section>
+
+<!-- ── SLOW MODE: Upsell modal (shown after Add to Cart) ───────────────────── -->
+<div class="modal-overlay" id="upsellModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Complete Your Purchase</h3>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="muted" style="margin-bottom:20px; font-size:0.9rem">
+        Customers who bought this watch also added these items. Select any to bundle and save.
+      </p>
+      <div class="upsell-grid" id="upsellItems"></div>
+      <div style="margin-top:16px; padding:14px; background:var(--surface); border-radius:4px; display:flex; align-items:center; gap:12px">
+        <span style="color:var(--gold); font-size:1.2rem">✦</span>
+        <p style="font-size:0.82rem; color:var(--muted)">
+          <strong style="color:var(--text)">Extended Warranty Option:</strong>
+          Add 3-year Horlogerie Élite coverage for £199. Includes annual servicing and parts.
+          <a href="#" style="color:var(--gold)">Learn more</a>
+        </p>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="addSelectedAndContinue()">Add to Cart</button>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="container">
+    <div class="footer-bottom">
+      <span>© 2025 Horlogerie Élite Ltd. All rights reserved.</span>
+      <span>Free insured delivery on all orders</span>
+    </div>
+  </div>
+</footer>
+
+<div class="mode-badge" id="modeBadge"></div>
+
+<script src="data.js"></script>
+<script>
+  updateCartBadge();
+  setModeBadge();
+
+  const params = new URLSearchParams(location.search);
+  const watchId = params.get('id') || 'rolex-submariner';
+  const watch = WATCHES.find(w => w.id === watchId) || WATCHES[0];
+
+  document.title = `${watch.name} — Horlogerie Élite`;
+  document.getElementById('breadcrumbName').textContent = watch.name;
+
+  // ── Stars helper ────────────────────────────────────────────────────────────
+  function stars(r) {
+    return '★'.repeat(Math.floor(r)) + (r % 1 >= 0.5 ? '½' : '');
+  }
+
+  // ── Gallery setup ───────────────────────────────────────────────────────────
+  let currentImg = 0;
+  const thumbsHtml = watch.imgs.map((src, i) => `
+    <div class="gallery-thumb ${i===0?'active':''}" onclick="switchImg(${i}, this)">
+      <img src="${src}" alt="View ${i+1}" />
+    </div>`).join('');
+
+  function switchImg(i, el) {
+    currentImg = i;
+    document.getElementById('mainImg').src = watch.imgs[i];
+    document.querySelectorAll('.gallery-thumb').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  // ── Action buttons based on mode ────────────────────────────────────────────
+  const slowButtons = `
+    <div class="product-actions">
+      <div class="product-actions-row">
+        <button class="btn btn-primary btn-lg" style="flex:1" id="addToCartBtn" onclick="handleAddToCart()">
+          Add to Cart
+        </button>
+        <button class="btn btn-outline" style="padding:16px 18px" title="Save to wishlist">♡</button>
+      </div>
+      <p class="form-note">Ships within 2–3 business days · Fully insured delivery</p>
+    </div>`;
+
+  const quickButtons = `
+    <div class="product-actions">
+      <div class="product-actions-row">
+        <button class="btn btn-primary btn-lg" style="flex:1; background:#1a6b3c; color:#fff" onclick="handleBuyNow()">
+          ⚡ Buy Now — Express Checkout
+        </button>
+      </div>
+      <div class="product-actions-row" style="margin-top:8px">
+        <button class="btn btn-outline btn-lg" style="flex:1" id="addToCartBtn" onclick="handleAddToCartQuick()">
+          Add to Cart
+        </button>
+        <button class="btn btn-ghost" style="padding:16px 18px" title="Wishlist">♡</button>
+      </div>
+      <p class="form-note">Ships within 2–3 business days · Fully insured delivery</p>
+    </div>`;
+
+  // ── Render product ───────────────────────────────────────────────────────────
+  document.getElementById('productLayout').innerHTML = `
+    <div class="product-gallery">
+      <div class="gallery-main">
+        <img id="mainImg" src="${watch.imgs[0]}" alt="${watch.name}" />
+      </div>
+      <div class="gallery-thumbs">${thumbsHtml}</div>
+    </div>
+    <div class="product-detail">
+      <div class="product-detail-brand">${watch.brand}</div>
+      <h1 class="product-detail-name">${watch.name}</h1>
+      <div class="product-detail-ref">${watch.ref}</div>
+      <div class="product-rating">
+        <span class="stars">${stars(watch.rating)}</span>
+        <span class="rating-count">${watch.rating.toFixed(1)} (${watch.reviews} reviews)</span>
+      </div>
+      <div class="product-detail-price">£${watch.price.toLocaleString()}</div>
+      <p class="product-desc">${watch.desc}</p>
+      <div class="product-specs">
+        ${watch.specs.map(s => `
+          <div class="spec-row">
+            <span class="spec-label">${s.label}</span>
+            <span class="spec-value">${s.value}</span>
+          </div>`).join('')}
+      </div>
+      ${CONFIG.QUICK_CHECKOUT ? quickButtons : slowButtons}
+      <div class="guarantee-strip">
+        <div class="guarantee-item">
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+          Authenticity Guaranteed
+        </div>
+        <div class="guarantee-item">
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          30-Day Returns
+        </div>
+        <div class="guarantee-item">
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+          Secure Payment
+        </div>
+      </div>
+    </div>`;
+
+  // ── Render upsell modal contents ─────────────────────────────────────────────
+  document.getElementById('upsellItems').innerHTML = ACCESSORIES.map(a => `
+    <div class="upsell-item" id="acc-${a.id}" onclick="toggleAccessory('${a.id}', this)">
+      <img src="${a.img}" alt="${a.name}" />
+      <div class="upsell-item-name">${a.name}</div>
+      <div class="upsell-item-price">+£${a.price.toLocaleString()}</div>
+    </div>`).join('');
+
+  // ── Related products ──────────────────────────────────────────────────────────
+  const related = WATCHES.filter(w => w.id !== watch.id).slice(0, 4);
+  document.getElementById('relatedGrid').innerHTML = related.map(w => `
+    <a href="product.html?id=${w.id}" class="card product-card">
+      <div class="product-card-img">
+        <img src="${w.img}" alt="${w.name}" loading="lazy" />
+        ${w.badge ? `<span class="product-badge">${w.badge}</span>` : ''}
+      </div>
+      <div class="product-card-body">
+        <div class="product-brand">${w.brand}</div>
+        <div class="product-name">${w.name}</div>
+        <div class="product-price">£${w.price.toLocaleString()}</div>
+      </div>
+    </a>`).join('');
+
+  // ── Handlers ─────────────────────────────────────────────────────────────────
+
+  // SLOW: opens upsell modal first
+  function handleAddToCart() {
+    addToCart({ id: watch.id, brand: watch.brand, name: watch.name, price: watch.price, img: watch.imgs[0], ref: watch.ref });
+    document.getElementById('upsellModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  // QUICK: add to cart + show toast, no modal
+  function handleAddToCartQuick() {
+    addToCart({ id: watch.id, brand: watch.brand, name: watch.name, price: watch.price, img: watch.imgs[0], ref: watch.ref });
+    showToast(`${watch.name} added to cart`);
+  }
+
+  // QUICK: go directly to express checkout
+  function handleBuyNow() {
+    addToCart({ id: watch.id, brand: watch.brand, name: watch.name, price: watch.price, img: watch.imgs[0], ref: watch.ref });
+    location.href = 'checkout.html?express=true';
+  }
+
+  function toggleAccessory(id, el) {
+    el.classList.toggle('selected');
+  }
+
+  function closeModal() {
+    document.getElementById('upsellModal').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function skipUpsell() {
+    closeModal();
+    location.href = 'cart.html';
+  }
+
+  function addSelectedAndContinue() {
+    document.querySelectorAll('.upsell-item.selected').forEach(el => {
+      const id = el.id.replace('acc-', '');
+      const acc = ACCESSORIES.find(a => a.id === id);
+      if (acc) addToCart({ id: acc.id, brand: 'Accessory', name: acc.name, price: acc.price, img: acc.img, ref: '' });
+    });
+    closeModal();
+    showToast(`${watch.name} added to cart`);
+  }
+</script>
+</body>
+</html>

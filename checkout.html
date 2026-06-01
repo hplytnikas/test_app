@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Checkout — Horlogerie Élite</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="config.js"></script>
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <a href="index.html" class="logo">Horlogerie <span>Élite</span></a>
+    <nav style="display:none"></nav>
+    <div class="header-actions">
+      <span class="muted" style="font-size:0.82rem">🔒 Secure Checkout</span>
+    </div>
+  </div>
+</header>
+
+<div style="padding-top:68px">
+  <div class="container">
+    <div class="breadcrumb">
+      <a href="index.html">Home</a><span>›</span>
+      <a href="cart.html">Cart</a><span>›</span>
+      <span id="checkoutBreadcrumb">Checkout</span>
+    </div>
+  </div>
+</div>
+
+<section class="section" style="padding-top:32px">
+  <div class="container" id="checkoutContainer">
+    <!-- Rendered by JS based on CONFIG.QUICK_CHECKOUT and step -->
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <div class="footer-bottom">
+      <span>© 2025 Horlogerie Élite Ltd. All rights reserved.</span>
+      <span>SSL Encrypted · PCI DSS Compliant</span>
+    </div>
+  </div>
+</footer>
+
+<div class="mode-badge" id="modeBadge"></div>
+
+<script src="data.js"></script>
+<script>
+  updateCartBadge();
+  setModeBadge();
+
+  const params = new URLSearchParams(location.search);
+  const isExpress = params.get('express') === 'true';
+  const stepParam = parseInt(params.get('step') || '1');
+
+  // ── Order summary sidebar HTML ───────────────────────────────────────────────
+  function orderSummaryHtml() {
+    const cart = getCart();
+    const subtotal = cartTotal();
+    const total = subtotal;
+    return `
+      <div class="checkout-summary">
+        <h3 class="serif" style="margin-bottom:20px">Order Summary</h3>
+        ${cart.map(i => `
+          <div class="checkout-item" id="co-item-${i.id}">
+            <div class="checkout-item-img">
+              <img src="${i.img}" alt="${i.name}" />
+            </div>
+            <div style="flex:1">
+              <div style="font-size:0.78rem; color:var(--gold); margin-bottom:2px">${i.brand}</div>
+              <div style="font-size:0.88rem">${i.name}</div>
+              <div style="font-size:0.8rem; color:var(--muted)">Qty: ${i.qty}</div>
+              <button onclick="removeFromSummary('${i.id}')" style="background:none;border:none;color:var(--muted);font-size:0.75rem;cursor:pointer;padding:0;margin-top:2px;font-family:inherit;" onmouseover="this.style.color='#e05555'" onmouseout="this.style.color='var(--muted)'">Remove</button>
+            </div>
+            <div style="font-weight:600; font-size:0.9rem">£${(i.price * i.qty).toLocaleString()}</div>
+          </div>`).join('')}
+        <div class="summary-row" style="margin-top:16px">
+          <span class="muted">Subtotal</span><span>£${subtotal.toLocaleString()}</span>
+        </div>
+        <div class="summary-row">
+          <span class="muted">Shipping</span>
+          <span id="shippingLine">Calculated next</span>
+        </div>
+        <div class="summary-row total">
+          <span>Total</span><span>£${total.toLocaleString()}</span>
+        </div>
+        <div style="margin-top:20px; padding:14px; background:var(--surface); border-radius:4px; font-size:0.8rem; color:var(--muted); text-align:center; line-height:1.7">
+          🔒 Your payment information is encrypted and secure.
+        </div>
+      </div>`;
+  }
+
+  // ════════════════════════════════════════════════════════════════════════════
+  //  EXPRESS CHECKOUT (QUICK_CHECKOUT = true OR ?express=true)
+  // ════════════════════════════════════════════════════════════════════════════
+  function renderExpress() {
+    document.getElementById('checkoutBreadcrumb').textContent = 'Express Checkout';
+    document.getElementById('checkoutContainer').innerHTML = `
+      <div class="express-layout">
+        <div>
+          <div class="express-badge">⚡ Express Checkout</div>
+          <h2 class="serif" style="margin-bottom:8px">Complete Your Order</h2>
+          <p class="muted" style="margin-bottom:32px; font-size:0.9rem">Fill in your details below and place your order in one step.</p>
+
+          <form onsubmit="submitExpress(event)">
+            <div class="checkout-form-section">
+              <h3>Contact &amp; Delivery</h3>
+              <div class="form-grid">
+                <div class="form-grid form-grid-2">
+                  <div class="form-group">
+                    <label>First name</label>
+                    <input type="text" class="form-control" placeholder="James" required />
+                  </div>
+                  <div class="form-group">
+                    <label>Last name</label>
+                    <input type="text" class="form-control" placeholder="Smith" required />
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>Email</label>
+                  <input type="email" class="form-control" placeholder="james@example.com" required />
+                </div>
+                <div class="form-group">
+                  <label>Delivery address</label>
+                  <input type="text" class="form-control" placeholder="123 Mayfair Street, London, W1K 1AB" required />
+                </div>
+              </div>
+            </div>
+
+            <div class="checkout-form-section">
+              <h3>Payment Details</h3>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label>Card number</label>
+                  <input type="text" class="form-control" placeholder="4242 4242 4242 4242" maxlength="19" required />
+                </div>
+                <div class="card-input-row">
+                  <div class="form-group">
+                    <label>Cardholder name</label>
+                    <input type="text" class="form-control" placeholder="James Smith" required />
+                  </div>
+                  <div class="form-group">
+                    <label>Expiry</label>
+                    <input type="text" class="form-control" placeholder="MM/YY" maxlength="5" required />
+                  </div>
+                  <div class="form-group">
+                    <label>CVV</label>
+                    <input type="text" class="form-control" placeholder="123" maxlength="4" required />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="tc-row">
+              <input type="checkbox" id="tcExpress" required />
+              <label for="tcExpress">
+                I agree to the <a href="#">Terms &amp; Conditions</a> and confirm my order is correct.
+              </label>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-lg btn-full" style="margin-top:8px">
+              ⚡ Place Order — £${cartTotal().toLocaleString()}
+            </button>
+            <p class="form-note">Encrypted payment · Order confirmed immediately</p>
+          </form>
+        </div>
+        ${orderSummaryHtml()}
+      </div>`;
+  }
+
+  function submitExpress(e) {
+    e.preventDefault();
+    localStorage.setItem('he_order', JSON.stringify({ cart: getCart(), mode: 'express', total: cartTotal() }));
+    localStorage.removeItem('he_cart');
+    location.href = 'confirmation.html';
+  }
+
+  // ════════════════════════════════════════════════════════════════════════════
+  //  SLOW CHECKOUT — 5 steps
+  // ════════════════════════════════════════════════════════════════════════════
+
+  const STEPS = [
+    { label: 'Contact', num: 1 },
+    { label: 'Shipping', num: 2 },
+    { label: 'Delivery', num: 3 },
+    { label: 'Payment', num: 4 },
+    { label: 'Review',  num: 5 },
+  ];
+
+  function stepsHtml(current) {
+    return `<div class="checkout-steps">
+      ${STEPS.map(s => `
+        <div class="step-indicator ${s.num < current ? 'done' : s.num === current ? 'active' : ''}">
+          <div class="step-num">${s.num < current ? '✓' : s.num}</div>
+          <div>${s.label}</div>
+        </div>`).join('')}
+    </div>`;
+  }
+
+  function renderStep() {
+    document.getElementById('checkoutContainer').innerHTML = `
+      <div class="checkout-layout">
+        <div style="display:flex; flex-direction:column; justify-content:center; align-items:center; padding: 60px 0; text-align:center;">
+          <button onclick="submitOrder()" class="btn btn-primary btn-lg" style="font-size:1.1rem; padding:20px 56px; letter-spacing:0.12em;">
+            Buy Now
+          </button>
+          <p class="muted" style="margin-top:16px; font-size:0.85rem">Secure checkout · SSL encrypted</p>
+        </div>
+        ${orderSummaryHtml()}
+      </div>`;
+  }
+
+  function step1Html() {
+    return `
+      <h2 class="serif" style="margin-bottom:24px">Contact Information</h2>
+      <form onsubmit="goStep(event, 2)">
+        <div class="checkout-form-section">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Email address</label>
+              <input type="email" class="form-control" placeholder="your@email.com" required />
+            </div>
+          </div>
+        </div>
+
+        <div class="checkout-form-section">
+          <h3>Account</h3>
+          <div class="radio-group">
+            <label class="radio-option selected" id="opt-guest" onclick="selectAcct(this, 'opt-create')">
+              <input type="radio" name="acct" value="guest" checked />
+              <div class="radio-label">
+                <div class="radio-label-title">Continue as guest</div>
+                <div class="radio-label-desc">No account required. Faster checkout.</div>
+              </div>
+            </label>
+            <label class="radio-option" id="opt-create" onclick="selectAcct(this, 'opt-guest')">
+              <input type="radio" name="acct" value="create" />
+              <div class="radio-label">
+                <div class="radio-label-title">Create an account</div>
+                <div class="radio-label-desc">Save your details for future purchases and track orders.</div>
+              </div>
+            </label>
+          </div>
+          <div id="passwordFields" style="display:none; margin-top:16px">
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Password</label>
+                <input type="password" class="form-control" placeholder="Minimum 8 characters" />
+              </div>
+              <div class="form-group">
+                <label>Confirm password</label>
+                <input type="password" class="form-control" placeholder="Repeat password" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-nav">
+          <a href="cart.html" class="btn btn-ghost">← Back to Cart</a>
+          <button type="submit" class="btn btn-primary">Continue to Shipping →</button>
+        </div>
+      </form>`;
+  }
+
+  function step2Html() {
+    return `
+      <h2 class="serif" style="margin-bottom:24px">Shipping Address</h2>
+      <form onsubmit="goStep(event, 3)">
+        <div class="checkout-form-section">
+          <div class="form-grid">
+            <div class="form-grid form-grid-2">
+              <div class="form-group">
+                <label>First name</label>
+                <input type="text" class="form-control" placeholder="James" required />
+              </div>
+              <div class="form-group">
+                <label>Last name</label>
+                <input type="text" class="form-control" placeholder="Smith" required />
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Company (optional)</label>
+              <input type="text" class="form-control" placeholder="Company name" />
+            </div>
+            <div class="form-group">
+              <label>Address line 1</label>
+              <input type="text" class="form-control" placeholder="Street address, P.O. box" required />
+            </div>
+            <div class="form-group">
+              <label>Address line 2 (optional)</label>
+              <input type="text" class="form-control" placeholder="Apartment, suite, unit, floor" />
+            </div>
+            <div class="form-grid form-grid-2">
+              <div class="form-group">
+                <label>City</label>
+                <input type="text" class="form-control" placeholder="London" required />
+              </div>
+              <div class="form-group">
+                <label>Postcode</label>
+                <input type="text" class="form-control" placeholder="W1K 1AB" required />
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Country</label>
+              <select class="form-control sort-select" style="width:100%">
+                <option>United Kingdom</option>
+                <option>United States</option>
+                <option>Germany</option>
+                <option>France</option>
+                <option>Switzerland</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Phone number</label>
+              <input type="tel" class="form-control" placeholder="+44 20 7946 0958" required />
+            </div>
+          </div>
+        </div>
+
+        <div class="form-nav">
+          <button type="button" class="btn btn-ghost" onclick="goStep(null, 1)">← Contact</button>
+          <button type="submit" class="btn btn-primary">Continue to Delivery →</button>
+        </div>
+      </form>`;
+  }
+
+  function step3Html() {
+    return `
+      <h2 class="serif" style="margin-bottom:24px">Delivery Method</h2>
+      <form onsubmit="goStep(event, 4)">
+        <div class="checkout-form-section">
+          <h3>Choose a shipping option</h3>
+          <div class="radio-group" id="shippingGroup">
+            <label class="radio-option" onclick="selectShipping(this, 'Free')">
+              <input type="radio" name="shipping" value="standard" />
+              <div class="radio-label">
+                <div class="radio-label-title">Standard Delivery</div>
+                <div class="radio-label-desc">5–7 business days · Tracked</div>
+              </div>
+              <div class="radio-price" style="color:var(--gold)">Free</div>
+            </label>
+            <label class="radio-option" onclick="selectShipping(this, '£25')">
+              <input type="radio" name="shipping" value="express" />
+              <div class="radio-label">
+                <div class="radio-label-title">Express Delivery</div>
+                <div class="radio-label-desc">2–3 business days · Fully tracked &amp; signed</div>
+              </div>
+              <div class="radio-price">£25</div>
+            </label>
+            <label class="radio-option" onclick="selectShipping(this, '£75')">
+              <input type="radio" name="shipping" value="overnight" />
+              <div class="radio-label">
+                <div class="radio-label-title">Overnight Delivery</div>
+                <div class="radio-label-desc">Next business day before 12:00 · Signature required</div>
+              </div>
+              <div class="radio-price">£75</div>
+            </label>
+            <label class="radio-option" onclick="selectShipping(this, '£150')">
+              <input type="radio" name="shipping" value="whiteglove" />
+              <div class="radio-label">
+                <div class="radio-label-title">White Glove Delivery</div>
+                <div class="radio-label-desc">Next day · Personal delivery specialist · Includes watch presentation</div>
+              </div>
+              <div class="radio-price">£150</div>
+            </label>
+          </div>
+        </div>
+
+        <div class="checkout-form-section">
+          <h3>Additional Options</h3>
+          <div style="display:flex; flex-direction:column; gap:12px">
+            <label style="display:flex; align-items:center; gap:12px; padding:14px 16px; border:1px solid var(--border); border-radius:4px; cursor:pointer">
+              <input type="checkbox" style="accent-color:var(--gold)" />
+              <div>
+                <div style="font-size:0.9rem">Transit insurance — £${Math.round(cartTotal() * 0.015).toLocaleString()}</div>
+                <div style="font-size:0.8rem; color:var(--muted)">Covers loss or damage in transit. Strongly recommended for high-value timepieces.</div>
+              </div>
+            </label>
+            <label style="display:flex; align-items:center; gap:12px; padding:14px 16px; border:1px solid var(--border); border-radius:4px; cursor:pointer">
+              <input type="checkbox" style="accent-color:var(--gold)" />
+              <div>
+                <div style="font-size:0.9rem">Gift wrapping — £15</div>
+                <div style="font-size:0.8rem; color:var(--muted)">Premium ribbon-wrapped presentation box with personalised card.</div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-nav">
+          <button type="button" class="btn btn-ghost" onclick="goStep(null, 2)">← Shipping</button>
+          <button type="submit" class="btn btn-primary">Continue to Payment →</button>
+        </div>
+      </form>`;
+  }
+
+  function step4Html() {
+    return `
+      <h2 class="serif" style="margin-bottom:24px">Payment Details</h2>
+      <form onsubmit="goStep(event, 5)">
+        <div class="checkout-form-section">
+          <div style="display:flex; gap:8px; margin-bottom:20px">
+            <div style="padding:6px 14px; background:var(--surface); border:1px solid var(--border); border-radius:4px; font-size:0.8rem; cursor:pointer" class="btn btn-outline" onclick="selectPayMethod(this, 'card')">💳 Card</div>
+            <div style="padding:6px 14px; background:var(--surface); border:1px solid var(--border); border-radius:4px; font-size:0.8rem; cursor:pointer" onclick="selectPayMethod(this, 'paypal')">PayPal</div>
+            <div style="padding:6px 14px; background:var(--surface); border:1px solid var(--border); border-radius:4px; font-size:0.8rem; cursor:pointer" onclick="selectPayMethod(this, 'bank')">Bank Transfer</div>
+          </div>
+
+          <div class="form-grid" id="cardFields">
+            <div class="form-group">
+              <label>Card number</label>
+              <input type="text" class="form-control" placeholder="4242 4242 4242 4242" maxlength="19" required />
+            </div>
+            <div class="form-group">
+              <label>Cardholder name</label>
+              <input type="text" class="form-control" placeholder="Name as it appears on card" required />
+            </div>
+            <div class="form-grid form-grid-2">
+              <div class="form-group">
+                <label>Expiry date</label>
+                <input type="text" class="form-control" placeholder="MM / YY" maxlength="7" required />
+              </div>
+              <div class="form-group">
+                <label>CVV / Security code</label>
+                <input type="text" class="form-control" placeholder="3–4 digits" maxlength="4" required />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="checkout-form-section">
+          <h3>Billing Address</h3>
+          <label style="display:flex; align-items:center; gap:10px; margin-bottom:16px; cursor:pointer; font-size:0.88rem">
+            <input type="checkbox" id="sameAsShipping" checked style="accent-color:var(--gold)" onchange="toggleBilling(this)" />
+            Same as shipping address
+          </label>
+          <div id="billingFields" style="display:none">
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Address</label>
+                <input type="text" class="form-control" placeholder="Billing address" />
+              </div>
+              <div class="form-grid form-grid-2">
+                <div class="form-group">
+                  <label>City</label>
+                  <input type="text" class="form-control" placeholder="City" />
+                </div>
+                <div class="form-group">
+                  <label>Postcode</label>
+                  <input type="text" class="form-control" placeholder="Postcode" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-nav">
+          <button type="button" class="btn btn-ghost" onclick="goStep(null, 3)">← Delivery</button>
+          <button type="submit" class="btn btn-primary">Review Order →</button>
+        </div>
+      </form>`;
+  }
+
+  function step5Html() {
+    const cart = getCart();
+    const subtotal = cartTotal();
+    return `
+      <h2 class="serif" style="margin-bottom:24px">Review &amp; Place Order</h2>
+
+      <div class="review-block">
+        <div class="review-block-header">
+          <div class="review-block-title">Contact</div>
+          <span class="review-block-edit" onclick="goStep(null, 1)">Edit</span>
+        </div>
+        <p>guest@example.com</p>
+      </div>
+
+      <div class="review-block">
+        <div class="review-block-header">
+          <div class="review-block-title">Shipping Address</div>
+          <span class="review-block-edit" onclick="goStep(null, 2)">Edit</span>
+        </div>
+        <p>James Smith<br>123 Mayfair Street<br>London, W1K 1AB<br>United Kingdom</p>
+      </div>
+
+      <div class="review-block">
+        <div class="review-block-header">
+          <div class="review-block-title">Delivery Method</div>
+          <span class="review-block-edit" onclick="goStep(null, 3)">Edit</span>
+        </div>
+        <p>Standard Delivery — Free<br>Estimated: 5–7 business days</p>
+      </div>
+
+      <div class="review-block">
+        <div class="review-block-header">
+          <div class="review-block-title">Payment</div>
+          <span class="review-block-edit" onclick="goStep(null, 4)">Edit</span>
+        </div>
+        <p>Visa ending in 4242<br>Expires 12/27</p>
+      </div>
+
+      <div class="review-block" style="border-color:var(--gold)">
+        <div class="review-block-header">
+          <div class="review-block-title">Order Items</div>
+        </div>
+        ${cart.map(i => `<p style="display:flex; justify-content:space-between;"><span>${i.brand} ${i.name} × ${i.qty}</span><strong>£${(i.price * i.qty).toLocaleString()}</strong></p>`).join('')}
+        <p style="display:flex; justify-content:space-between; margin-top:12px; padding-top:12px; border-top:1px solid var(--border); font-weight:600"><span>Total</span><span>£${subtotal.toLocaleString()}</span></p>
+      </div>
+
+      <div class="tc-row">
+        <input type="checkbox" id="tcCheck" required />
+        <label for="tcCheck">
+          I confirm that all details are correct and I agree to the
+          <a href="#">Terms &amp; Conditions</a>, <a href="#">Privacy Policy</a>,
+          and <a href="#">Returns Policy</a>. I understand that by placing this order
+          I am entering into a legally binding purchase agreement.
+        </label>
+      </div>
+      <div class="tc-row" style="margin-top:4px">
+        <input type="checkbox" id="ageCheck" required />
+        <label for="ageCheck">I confirm I am over 18 years of age.</label>
+      </div>
+
+      <button class="btn btn-primary btn-lg btn-full" style="margin-top:20px" onclick="submitOrder()">
+        Place Order — £${subtotal.toLocaleString()}
+      </button>
+      <p class="form-note" style="margin-top:14px">
+        By placing your order you confirm payment of £${subtotal.toLocaleString()}.<br>
+        You will receive a confirmation email shortly after.
+      </p>
+      <div style="margin-top:12px; text-align:center">
+        <button type="button" class="btn btn-ghost" onclick="goStep(null, 4)">← Edit Payment</button>
+      </div>`;
+  }
+
+  // ── Navigation helpers ───────────────────────────────────────────────────────
+
+  function goStep(e, step) {
+    if (e) e.preventDefault();
+    location.href = `checkout.html?step=${step}`;
+  }
+
+  function selectAcct(el, otherId) {
+    document.getElementById(otherId).classList.remove('selected');
+    el.classList.add('selected');
+    const showPwd = el.querySelector('input').value === 'create';
+    const pf = document.getElementById('passwordFields');
+    if (pf) pf.style.display = showPwd ? 'block' : 'none';
+  }
+
+  function selectShipping(el, price) {
+    document.querySelectorAll('#shippingGroup .radio-option').forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+    const sl = document.getElementById('shippingLine');
+    if (sl) sl.textContent = price === 'Free' ? 'Free' : price;
+  }
+
+  function selectPayMethod(el, method) {
+    el.parentElement.querySelectorAll('div').forEach(d => d.classList.remove('btn-outline'));
+    el.classList.add('btn-outline');
+  }
+
+  function toggleBilling(cb) {
+    const bf = document.getElementById('billingFields');
+    if (bf) bf.style.display = cb.checked ? 'none' : 'block';
+  }
+
+  function submitOrder() {
+    localStorage.setItem('he_order', JSON.stringify({ cart: getCart(), mode: 'standard', total: cartTotal() }));
+    localStorage.removeItem('he_cart');
+    location.href = 'confirmation.html';
+  }
+
+  // ── Init ─────────────────────────────────────────────────────────────────────
+
+  function init() {
+    const cart = getCart();
+    if (cart.length === 0 && !localStorage.getItem('he_order')) {
+      location.href = 'cart.html';
+      return;
+    }
+
+    if (CONFIG.QUICK_CHECKOUT || isExpress) {
+      renderExpress();
+    } else {
+      renderStep();
+    }
+  }
+
+  function removeFromSummary(id) {
+    removeFromCart(id);
+    const cart = getCart();
+    if (cart.length === 0) { location.href = 'cart.html'; return; }
+    // Re-render the current view to refresh the summary
+    if (CONFIG.QUICK_CHECKOUT || isExpress) { renderExpress(); } else { renderStep(stepParam); }
+  }
+
+  init();
+</script>
+</body>
+</html>
