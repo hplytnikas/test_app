@@ -4,21 +4,21 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Horlogerie Élite — Luxury Timepieces</title>
-  <link rel="stylesheet" href="style.css" />
-  <script src="config.js"></script>
+  <link rel="stylesheet" href="/style.css" />
+  <script src="/config.js"></script>
 </head>
 <body>
 
 <header>
   <div class="container">
-    <a href="index.html" class="logo">Horlogerie <span>Élite</span></a>
+    <a href="/index.html" class="logo">Horlogerie <span>Élite</span></a>
     <nav>
-      <a href="index.html" class="active">Home</a>
-      <a href="catalog.html">Collections</a>
-      <a href="catalog.html?brand=rolex">Rolex</a>
-      <a href="catalog.html?brand=omega">Omega</a>
+      <a href="/index.html" class="active">Home</a>
+      <a href="/catalog.html">Collections</a>
+      <a href="/catalog.html?brand=rolex">Rolex</a>
+      <a href="/catalog.html?brand=omega">Omega</a>
       <a href="#">About</a>
-      <a href="cart.html">Cart<span class="cart-nav-count" id="cartNavCount" style="display:none">0</span></a>
+      <a href="/cart.html">Cart<span class="cart-nav-count" id="cartNavCount" style="display:none">0</span></a>
     </nav>
     <div class="header-actions"></div>
   </div>
@@ -38,8 +38,8 @@
         glow in the dark.
       </p>
       <div class="hero-actions">
-        <a href="product.html?id=rolex-submariner" class="btn btn-primary btn-lg">Shop Now</a>
-        <a href="catalog.html" class="btn btn-outline btn-lg">View All Watches</a>
+        <a href="/product.html?id=rolex-submariner" class="btn btn-primary btn-lg">Shop Now</a>
+        <a href="/catalog.html" class="btn btn-outline btn-lg">View All Watches</a>
       </div>
     </div>
     <div class="hero-img">
@@ -85,7 +85,7 @@
     </div>
     <div class="product-grid product-grid-4" id="featuredGrid"></div>
     <div style="text-align:center; margin-top:48px">
-      <a href="catalog.html" class="btn btn-outline btn-lg">Browse Full Collection</a>
+      <a href="/catalog.html" class="btn btn-outline btn-lg">Browse Full Collection</a>
     </div>
   </div>
 </section>
@@ -119,11 +119,11 @@
       <div>
         <div class="footer-heading">Collections</div>
         <ul class="footer-links">
-          <li><a href="catalog.html?brand=rolex">Rolex</a></li>
-          <li><a href="catalog.html?brand=omega">Omega</a></li>
-          <li><a href="catalog.html">Patek Philippe</a></li>
-          <li><a href="catalog.html">Audemars Piguet</a></li>
-          <li><a href="catalog.html">Tag Heuer</a></li>
+          <li><a href="/catalog.html?brand=rolex">Rolex</a></li>
+          <li><a href="/catalog.html?brand=omega">Omega</a></li>
+          <li><a href="/catalog.html">Patek Philippe</a></li>
+          <li><a href="/catalog.html">Audemars Piguet</a></li>
+          <li><a href="/catalog.html">Tag Heuer</a></li>
         </ul>
       </div>
       <div>
@@ -154,14 +154,14 @@
 
 <div class="mode-badge" id="modeBadge"></div>
 
-<script src="data.js"></script>
+<script src="/data.js"></script>
 <script>
   updateCartBadge();
   setModeBadge();
 
   const grid = document.getElementById('featuredGrid');
   WATCHES.slice(0, 4).forEach(w => {
-    const url = `product.html?id=${w.id}`;
+    const url = `/product.html?id=${w.id}`;
     grid.innerHTML += `
       <a href="${url}" class="card product-card">
         <div class="product-card-img">

@@ -4,14 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Checkout — Horlogerie Élite</title>
-  <link rel="stylesheet" href="style.css" />
-  <script src="config.js"></script>
+  <link rel="stylesheet" href="/style.css" />
+  <script src="/config.js"></script>
 </head>
 <body>
 
 <header>
   <div class="container">
-    <a href="index.html" class="logo">Horlogerie <span>Élite</span></a>
+    <a href="/index.html" class="logo">Horlogerie <span>Élite</span></a>
     <nav style="display:none"></nav>
     <div class="header-actions">
       <span class="muted" style="font-size:0.82rem">🔒 Secure Checkout</span>
@@ -22,8 +22,8 @@
 <div style="padding-top:68px">
   <div class="container">
     <div class="breadcrumb">
-      <a href="index.html">Home</a><span>›</span>
-      <a href="cart.html">Cart</a><span>›</span>
+      <a href="/index.html">Home</a><span>›</span>
+      <a href="/cart.html">Cart</a><span>›</span>
       <span id="checkoutBreadcrumb">Checkout</span>
     </div>
   </div>
@@ -46,7 +46,7 @@
 
 <div class="mode-badge" id="modeBadge"></div>
 
-<script src="data.js"></script>
+<script src="/data.js"></script>
 <script>
   updateCartBadge();
   setModeBadge();
@@ -173,7 +173,7 @@
         </div>
 
         <div class="form-nav">
-          <a href="cart.html" class="btn btn-ghost">← Back to Cart</a>
+          <a href="/cart.html" class="btn btn-ghost">← Back to Cart</a>
           <button type="submit" class="btn btn-primary">Continue to Shipping →</button>
         </div>
       </form>`;
@@ -453,7 +453,7 @@
 
   function goStep(e, step) {
     if (e) e.preventDefault();
-    location.href = `checkout.html?step=${step}`;
+    location.href = `/checkout.html?step=${step}`;
   }
 
   function selectAcct(el, otherId) {
@@ -484,7 +484,7 @@
   function submitOrder() {
     localStorage.setItem('he_order', JSON.stringify({ cart: getCart(), mode: 'standard', total: cartTotal() }));
     localStorage.removeItem('he_cart');
-    location.href = 'confirmation.html';
+    location.href = '/confirmation.html';
   }
 
   // ── Init ─────────────────────────────────────────────────────────────────────
@@ -492,7 +492,7 @@
   function init() {
     const cart = getCart();
     if (cart.length === 0 && !localStorage.getItem('he_order')) {
-      location.href = 'cart.html';
+      location.href = '/cart.html';
       return;
     }
 
@@ -502,7 +502,7 @@
   function removeFromSummary(id) {
     removeFromCart(id);
     const cart = getCart();
-    if (cart.length === 0) { location.href = 'cart.html'; return; }
+    if (cart.length === 0) { location.href = '/cart.html'; return; }
     renderStep();
   }
 

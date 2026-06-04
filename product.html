@@ -4,21 +4,21 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Product — Horlogerie Élite</title>
-  <link rel="stylesheet" href="style.css" />
-  <script src="config.js"></script>
+  <link rel="stylesheet" href="/style.css" />
+  <script src="/config.js"></script>
 </head>
 <body>
 
 <header>
   <div class="container">
-    <a href="index.html" class="logo">Horlogerie <span>Élite</span></a>
+    <a href="/index.html" class="logo">Horlogerie <span>Élite</span></a>
     <nav>
-      <a href="index.html">Home</a>
-      <a href="catalog.html">Collections</a>
-      <a href="catalog.html?brand=rolex">Rolex</a>
-      <a href="catalog.html?brand=omega">Omega</a>
+      <a href="/index.html">Home</a>
+      <a href="/catalog.html">Collections</a>
+      <a href="/catalog.html?brand=rolex">Rolex</a>
+      <a href="/catalog.html?brand=omega">Omega</a>
       <a href="#">About</a>
-      <a href="cart.html">Cart<span class="cart-nav-count" id="cartNavCount" style="display:none">0</span></a>
+      <a href="/cart.html">Cart<span class="cart-nav-count" id="cartNavCount" style="display:none">0</span></a>
     </nav>
     <div class="header-actions"></div>
   </div>
@@ -27,8 +27,8 @@
 <div style="padding-top:68px">
   <div class="container">
     <div class="breadcrumb">
-      <a href="index.html">Home</a><span>›</span>
-      <a href="catalog.html">Collections</a><span>›</span>
+      <a href="/index.html">Home</a><span>›</span>
+      <a href="/catalog.html">Collections</a><span>›</span>
       <span id="breadcrumbName">Watch</span>
     </div>
   </div>
@@ -92,7 +92,7 @@
 
 <div class="mode-badge" id="modeBadge"></div>
 
-<script src="data.js"></script>
+<script src="/data.js"></script>
 <script>
   updateCartBadge();
   setModeBadge();
@@ -204,7 +204,7 @@
   // ── Related products ──────────────────────────────────────────────────────────
   const related = WATCHES.filter(w => w.id !== watch.id).slice(0, 4);
   document.getElementById('relatedGrid').innerHTML = related.map(w => `
-    <a href="product.html?id=${w.id}" class="card product-card">
+    <a href="/product.html?id=${w.id}" class="card product-card">
       <div class="product-card-img">
         <img src="${w.img}" alt="${w.name}" loading="lazy" />
         ${w.badge ? `<span class="product-badge">${w.badge}</span>` : ''}
@@ -234,7 +234,7 @@
   // QUICK: go directly to express checkout
   function handleBuyNow() {
     addToCart({ id: watch.id, brand: watch.brand, name: watch.name, price: watch.price, img: watch.imgs[0], ref: watch.ref });
-    location.href = 'checkout.html?express=true';
+    location.href = '/checkout.html?express=true';
   }
 
   function toggleAccessory(id, el) {
@@ -248,7 +248,7 @@
 
   function skipUpsell() {
     closeModal();
-    location.href = 'cart.html';
+    location.href = '/cart.html';
   }
 
   function addSelectedAndContinue() {
