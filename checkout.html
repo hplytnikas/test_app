@@ -453,7 +453,7 @@
 
   function goStep(e, step) {
     if (e) e.preventDefault();
-    location.href = `/checkout.html?step=${step}`;
+    location.href = (window.__ux_rewrite || function(u){return u;})(`/checkout.html?step=${step}`);
   }
 
   function selectAcct(el, otherId) {
