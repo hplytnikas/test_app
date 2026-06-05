@@ -9,5 +9,5 @@
 //                 single-screen express checkout
 // ============================================================
 const CONFIG = {
-  QUICK_CHECKOUT: false,
+  QUICK_CHECKOUT: true,
 };
