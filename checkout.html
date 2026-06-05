@@ -484,7 +484,7 @@
   function submitOrder() {
     localStorage.setItem('he_order', JSON.stringify({ cart: getCart(), mode: 'standard', total: cartTotal() }));
     localStorage.removeItem('he_cart');
-    location.href = '/confirmation.html';
+    location.href = (window.__ux_rewrite || function(u){return u;})('/confirmation.html');
   }
 
   // ── Init ─────────────────────────────────────────────────────────────────────
