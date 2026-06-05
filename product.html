@@ -234,7 +234,7 @@
   // QUICK: go directly to express checkout
   function handleBuyNow() {
     addToCart({ id: watch.id, brand: watch.brand, name: watch.name, price: watch.price, img: watch.imgs[0], ref: watch.ref });
-    location.href = '/checkout.html?express=true';
+    location.href = (window.__ux_rewrite || function(u){return u;})('/checkout.html?express=true');
   }
 
   function toggleAccessory(id, el) {
@@ -248,7 +248,7 @@
 
   function skipUpsell() {
     closeModal();
-    location.href = '/cart.html';
+    location.href = (window.__ux_rewrite || function(u){return u;})('/cart.html');
   }
 
   function addSelectedAndContinue() {

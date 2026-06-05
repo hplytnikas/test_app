@@ -492,7 +492,7 @@
   function init() {
     const cart = getCart();
     if (cart.length === 0 && !localStorage.getItem('he_order')) {
-      location.href = '/cart.html';
+      location.href = (window.__ux_rewrite || function(u){return u;})('/cart.html');
       return;
     }
 
@@ -502,7 +502,7 @@
   function removeFromSummary(id) {
     removeFromCart(id);
     const cart = getCart();
-    if (cart.length === 0) { location.href = '/cart.html'; return; }
+    if (cart.length === 0) { location.href = (window.__ux_rewrite || function(u){return u;})('/cart.html'); return; }
     renderStep();
   }
 
